@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const connectDB = require('./config/db'); // 👈 Import DB
 const authRoutes = require('./routes/authRoutes');
+const problemRoutes = require('./routes/problemRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ connectDB();
 
 // Routes
 app.use('/api', authRoutes); 
+app.use('/api/problems', problemRoutes);
 
 app.post('/test', (req, res) => {
     res.json({ message: 'Test route working' });
@@ -25,7 +27,7 @@ app.post('/test', (req, res) => {
   
 
 app.get('/', (req, res) => {
-  res.send('API is working 🚀');
+  res.send('API is workings 🚀');
 });
 
 const PORT = process.env.PORT || 5050;
