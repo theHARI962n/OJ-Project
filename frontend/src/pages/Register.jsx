@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { register } from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
+import image3 from '../assets/image3.png';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
@@ -20,8 +21,11 @@ export default function Register() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 mt-10 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Register</h2>
+    <>
+    <div className=' flex min-h-screen bg-gradient-to-r from-indigo-50 to-purple-50'>
+    <div className='w-1/2 flex items-center justify-center'>
+    <div className=" max-w-xl w-1/2 mx-auto p-8  bg-white rounded-2xl shadow">
+      <h2 className="text-2xl font-bold mb-4">Create Account</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input name="name" placeholder="Name" onChange={handleChange} required className="border p-2" />
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-2" />
@@ -30,8 +34,15 @@ export default function Register() {
           <option value="user">User</option>
           <option value="admin">Admin</option>
         </select>
-        <button type="submit" className="bg-blue-500 text-white py-2">Register</button>
+        <button type="submit" className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">Register</button>
       </form>
     </div>
+    </div>
+
+    <div className='w-1/2 h-screen'>
+      <img src={image3} alt='photo' className='w-full h-full object-cover rounded-bl-[100px]'></img>
+    </div>
+    </div>
+    </>
   );
 }

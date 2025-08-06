@@ -24,13 +24,19 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
+    <>
+    <div className='  min-h-screen items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 pt-[150px]'>
+
+    
+    <div className=" max-w-md mx-auto   bg-white p-6 rounded-3xl shadow ">
+      <h2 className="text-2xl font-bold mb-4">Welcome Back</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-2" />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="border p-2" />
-        <button type="submit" className="bg-green-500 text-white py-2">Login</button>
+        <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-2 rounded-2xl" />
+        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="border p-2 rounded-2xl" />
+        <button type="submit" className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">Login</button>
       </form>
     </div>
+    </div>
+    </>
   );
 }
