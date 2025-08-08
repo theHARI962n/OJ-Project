@@ -58,7 +58,7 @@ export default function Home() {
           <h3 className="text-3xl font-semibold text-gray-800 mb-4">About CompileAI</h3>
           <p className="text-gray-600 text-lg leading-relaxed">
             CompileAI is a MERN-stack based online judge platform designed for learners, competitive programmers,
-            and educators. Built with the vision to make coding more accessible and intelligent, it brings together powerful features like real-time C++ compilation, question management, and future-ready AI assistance.
+            and educators. Built with passion to learn, and this is a personal project that I have built. It brings together powerful features like real-time C++ compilation, question management, and future-ready AI assistance. 
           </p>
         </div>
       </section>

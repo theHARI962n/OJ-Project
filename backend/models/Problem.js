@@ -32,7 +32,13 @@ const problemSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }
+  },
+  testCases: [ // ✅ NEW FIELD
+    {
+      input: String,
+      expectedOutput: String
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Problem', problemSchema);

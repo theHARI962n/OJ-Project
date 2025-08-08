@@ -8,6 +8,7 @@ const connectDB = require('./config/db'); // 👈 Import DB
 const authRoutes = require('./routes/authRoutes');
 const problemRoutes = require('./routes/problemRoutes');
 const submissionRoutes = require('./routes/submissionRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 
 const app = express();
@@ -23,6 +24,8 @@ connectDB();
 app.use('/api', authRoutes); 
 app.use('/api/problems', problemRoutes);
 app.use('/api/submit', submissionRoutes);
+app.use('/api', userRoutes);
+
 
 app.post('/test', (req, res) => {
     res.json({ message: 'Test route working' });

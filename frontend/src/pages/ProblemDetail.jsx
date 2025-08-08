@@ -1,119 +1,159 @@
+// src/pages/ProblemPage.jsx
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
 import CodeMirror from "@uiw/react-codemirror";
 import { cpp } from "@codemirror/lang-cpp";
 
-export default function ProblemDetail() {
+export default function ProblemPage() {
   const { id } = useParams();
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState(
-    "#include<iostream>\nusing namespace std;\nint main(){\n  \n  return 0;\n}"
+    `#include<iostream>\nusing namespace std;\nint main(){\n    int a,b; cin >> a >> b; \n    cout << a + b; \n    return 0;\n}`
   );
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
+  const [language, setLanguage] = useState("cpp");
   const [verdict, setVerdict] = useState("");
-  const [expectedOutput, setExpectedOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [testResults, setTestResults] = useState([]);
 
+  // Fetch problem details
   useEffect(() => {
     const fetchProblem = async () => {
-      const res = await axios.get(`http://localhost:5050/api/problems/${id}`);
-      setProblem(res.data);
-      // Set default expectedOutput if needed
-      setExpectedOutput("9"); // you can fetch actual from problem data if stored
+      const res = await fetch(`http://localhost:5050/api/problems/${id}`);
+      const data = await res.json();
+      setProblem(data);
     };
     fetchProblem();
   }, [id]);
 
   const handleSubmit = async () => {
+    console.log("Run Code clicked!");
+    setLoading(true);
+    setVerdict("");
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "http://localhost:5050/api/submit",
-        {
-          problemId: id,
-          code,
-          language: "cpp",
-          input,
-          expectedOutput,
+      const res = await fetch("http://localhost:5050/api/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+        body: JSON.stringify({
+          problemId: id,
+          language,
+          code,
+        }),
+      });
 
-      setOutput(res.data.submission.actualOutput);
-      setVerdict(res.data.submission.verdict);
+      const data = await res.json();
+      console.log("Response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Request failed");
+      }
+
+      setVerdict(data.submission?.verdict || data.message);
+
+      // ✅ Store testResults in state
+      if (data.submission?.testResults) {
+        console.log("Setting testResults:", data.submission.testResults); // Debug log
+        setTestResults(data.submission.testResults);
+      } else {
+        setTestResults([]);
+      }
+
     } catch (err) {
-      alert("Submission failed ❌");
-      console.error(err);
+      console.error("Submit error:", err);
+      setVerdict("Error submitting code");
     }
+    setLoading(false);
   };
 
-  if (!problem) return <div className="p-6">Loading...</div>;
+  if (!problem) return <div className="p-6">Loading problem...</div>;
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 p-4">
-      {/* LEFT SECTION – Problem Details + Input/Output */}
-      <div className="md:w-1/2 space-y-4">
-        <h2 className="text-2xl font-bold">{problem.title}</h2>
-        <p className="text-gray-700">{problem.description}</p>
-        <p>
-          <strong>Input Format:</strong> {problem.inputFormat}
-        </p>
-        <p>
-          <strong>Output Format:</strong> {problem.outputFormat}
-        </p>
-
-        <div className="mt-6">
-          <label className="block mb-1 font-semibold">Input:</label>
-          <textarea
-            rows={3}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            className="w-full border border-gray-300 rounded p-2"
-          />
-
-          <label className="block mt-4 mb-1 font-semibold">
-            Expected Output:
-          </label>
-          <input
-            value={expectedOutput}
-            onChange={(e) => setExpectedOutput(e.target.value)}
-            className="w-full border border-gray-300 rounded p-2"
-          />
-
-          <button
-            onClick={handleSubmit}
-            className="mt-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Submit
-          </button>
-
-          {output && (
-            <div className="mt-4 p-3 bg-gray-100 rounded">
-              <p>
-                <strong>Output:</strong> {output}
-              </p>
-              <p>
-                <strong>Verdict:</strong> {verdict}
-              </p>
-            </div>
-          )}
+    <div className="flex flex-col md:flex-row h-screen">
+      {/* Left Column - Problem Details */}
+      <div className="w-full md:w-1/2 p-6 overflow-y-auto border-r">
+        <h1 className="text-2xl font-bold mb-4">{problem.title}</h1>
+        <p className="mb-4">{problem.description}</p>
+        <div className="mb-2">
+          <strong>Input Format:</strong>
+          <p>{problem.inputFormat}</p>
+        </div>
+        <div className="mb-2">
+          <strong>Output Format:</strong>
+          <p>{problem.outputFormat}</p>
+        </div>
+        <div className="mb-2">
+          <strong>Difficulty:</strong> {problem.difficulty}
+        </div>
+        <div className="mb-2">
+          <strong>Tags:</strong> {problem.tags.join(", ")}
         </div>
       </div>
 
-      {/* RIGHT SECTION – Code Editor */}
-      <div className="md:w-1/2">
-        <label className="block mb-2 font-semibold">Code:</label>
+      {/* Right Column - Code Editor */}
+      <div className="w-full md:w-1/2 p-6 flex flex-col">
+        <div className="flex items-center gap-2 mb-2">
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="border p-1 rounded"
+          >
+            <option value="cpp">C++</option>
+          </select>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600"
+          >
+            {loading ? "Running..." : "Run Code"}
+          </button>
+        </div>
+
         <CodeMirror
           value={code}
-          height="600px"
+          height="400px"
           extensions={[cpp()]}
           onChange={(value) => setCode(value)}
         />
+
+        {/* Verdict Display */}
+        {verdict && (
+          <div className="mt-4 p-2 bg-gray-100 border rounded">
+            <strong>Result:</strong> {verdict}
+          </div>
+        )}
+
+        {testResults.length > 0 && (
+          <div className="mt-4">
+            <h3 className="font-semibold mb-2">Test Case Results:</h3>
+            <table className="w-full border border-gray-300 text-sm">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="border px-2 py-1">Input</th>
+                  <th className="border px-2 py-1">Expected Output</th>
+                  <th className="border px-2 py-1">Your Output</th>
+                  <th className="border px-2 py-1">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {testResults.map((tr, idx) => (
+                  <tr
+                    key={idx}
+                    className={tr.isCorrect ? "bg-green-50" : "bg-red-50"}
+                  >
+                    <td className="border px-2 py-1">{tr.input}</td>
+                    <td className="border px-2 py-1">{tr.expectedOutput}</td>
+                    <td className="border px-2 py-1">{tr.actualOutput}</td>
+                    <td className="border px-2 py-1">
+                      {tr.isCorrect ? "✅ Passed" : "❌ Failed"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

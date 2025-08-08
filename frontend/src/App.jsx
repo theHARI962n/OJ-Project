@@ -9,6 +9,7 @@ import ProblemList from './components/admin/ProblemList';
 import CreateProblem from './components/admin/CreateProblem';
 import EditProblem from './components/admin/EditProblem';
 import ProtectedAdminRoute from './routes/ProtectedAdminRoute';
+import MySubmissions from './pages/MySubmissions';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/problems/:id" element={<ProblemDetail />} />
+      <Route path="/mine" element={<MySubmissions />} />
       <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
       <Route path="/admin/problems" element={<ProtectedAdminRoute><ProblemList /></ProtectedAdminRoute>} />
       <Route path="/admin/problems/create" element={<ProtectedAdminRoute><CreateProblem /></ProtectedAdminRoute>} />

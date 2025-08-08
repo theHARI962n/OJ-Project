@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { login } from '../services/AuthService';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -25,10 +25,10 @@ export default function Login() {
 
   return (
     <>
-    <div className='  min-h-screen items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 pt-[150px]'>
-
-    
-    <div className=" max-w-md mx-auto   bg-white p-6 rounded-3xl shadow ">
+    <div className='  min-h-screen items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 pt-4 px-4'>
+    <Link to="/"><h1 className="text-2xl font-bold text-indigo-600 ">CompileAI</h1></Link>
+    <div className='pt-[150px]'>
+    <div className=" max-w-md mx-auto   bg-white p-6 rounded-3xl shadow">
       <h2 className="text-2xl font-bold mb-4">Welcome Back</h2>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-2 rounded-2xl" />
@@ -36,6 +36,8 @@ export default function Login() {
         <button type="submit" className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition">Login</button>
       </form>
     </div>
+    </div>
+    
     </div>
     </>
   );

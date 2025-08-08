@@ -7,7 +7,7 @@ const Problem = require('../models/Problem');
 // @access Private (admin only)
 const createProblem = async (req, res) => {
   try {
-    const { title, description, inputFormat, outputFormat, difficulty, tags } = req.body;
+    const { title, description, inputFormat, outputFormat, difficulty, tags,testCases } = req.body;
 
     const existing = await Problem.findOne({ title });
     if (existing) {
@@ -21,7 +21,8 @@ const createProblem = async (req, res) => {
       outputFormat,
       difficulty,
       tags,
-      createdBy: req.user.userId
+      createdBy: req.user.userId,
+      testCases
     });
 
     res.status(201).json(problem);
