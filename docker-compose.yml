@@ -1,0 +1,41 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    networks:
+      - oj_network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5050:5050"
+    env_file:
+      - ./backend/.env
+    environment:
+      - COMPILER_URL=http://compiler:8000
+    depends_on:
+      - compiler
+    networks:
+      - oj_network
+
+  compiler:
+    build:
+      context: ./compiler
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./compiler/temp:/app/temp
+    networks:
+      - oj_network
+
+networks:
+  oj_network:
+    driver: bridge

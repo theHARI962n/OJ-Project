@@ -2,6 +2,9 @@ const axios = require('axios');
 const Submission = require('../models/Submission');
 const Problem = require('../models/Problem');
 
+
+const COMPILER_URL = process.env.COMPILER_URL || "http://localhost:8000";
+
 const submitCode = async (req, res) => {
   const { code, language, problemId } = req.body;
 
@@ -15,7 +18,7 @@ const submitCode = async (req, res) => {
     let testResults = [];
 
 for (let tc of problem.testCases) {
-  const response = await axios.post('http://localhost:8000/run', {
+  const response = await axios.post(`${COMPILER_URL}/run`, {
     language,
     code,
     input: tc.input
