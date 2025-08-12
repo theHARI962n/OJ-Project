@@ -1,10 +1,29 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import Loader from "./Loader";
 
 export default function Home() {
+  const [loading, setLoading] = useState(true);
+  const [fade, setFade] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setFade(true); // start fade-in
+      setTimeout(() => setLoading(false), 700); // remove loader after fade
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
-    <div className="bg-gray-50 text-gray-800">
+    <div className={`bg-gray-50 text-gray-800 transition-opacity duration-700 ${
+      fade ? "opacity-100" : "opacity-0"
+    }`}>
       {/* Navbar */}
-      <header className="bg-white shadow-sm fixed w-full z-10">
+      <header className="bg-white shadow-lg fixed w-full z-10 rounded-lg border border-gray-400">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-indigo-600">CompileAI</h1>
           <nav className="space-x-6">
@@ -17,7 +36,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-24 text-center bg-gradient-to-r from-indigo-50 to-purple-50">
+      <section className="pt-32 pb-24 m-4 text-center bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg ">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-5xl font-extrabold text-indigo-700 mb-6">
             Code. Compile. Conquer.
@@ -32,7 +51,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section id="features" className="py-20 bg-white">
+      <section id="features" className="py-20 bg-white m-4 rounded-lg border border-gray-400">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h3 className="text-3xl font-semibold text-gray-800 mb-12">Platform Features</h3>
           <div className="grid md:grid-cols-3 gap-8">
@@ -45,7 +64,7 @@ export default function Home() {
               <p className="text-gray-600">Separate dashboards and access control for users and administrators.</p>
             </div>
             <div className="bg-gray-50 p-6 rounded-lg shadow hover:shadow-md transition">
-              <h4 className="text-xl font-semibold text-indigo-600 mb-2">AI Assistance (Coming Soon)</h4>
+              <h4 className="text-xl font-semibold text-indigo-600 mb-2">AI Assistance</h4>
               <p className="text-gray-600">Smart hint generation and error analysis to help you debug and learn faster.</p>
             </div>
           </div>
@@ -53,7 +72,7 @@ export default function Home() {
       </section>
 
       {/* About */}
-      <section id="about" className="py-20 bg-gray-100 m-4 rounded-lg">
+      <section id="about" className="py-20 bg-gray-100 m-4 rounded-lg border border-gray-400">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h3 className="text-3xl font-semibold text-gray-800 mb-4">About CompileAI</h3>
           <p className="text-gray-600 text-lg leading-relaxed">
@@ -64,7 +83,7 @@ export default function Home() {
       </section>
 
       {/* Contact */}
-      <section id="contact" className="py-20 bg-white m-4 rounded-lg">
+      <section id="contact" className="py-20 bg-white m-4 rounded-lg border border-gray-400">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <h3 className="text-3xl font-semibold text-gray-800 mb-6">Get in Touch</h3>
           <p className="text-gray-600 mb-6">Have feedback, suggestions, or want to collaborate?</p>
@@ -76,7 +95,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white text-center py-6">
+      <footer className="bg-gray-900 text-white text-center py-6 rounded-lg m-4">
         <p>&copy; {new Date().getFullYear()} CompileAI. All rights reserved.</p>
       </footer>
     </div>

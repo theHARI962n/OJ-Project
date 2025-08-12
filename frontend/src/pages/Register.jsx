@@ -1,14 +1,29 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { register } from '../services/AuthService';
 import { useNavigate } from 'react-router-dom';
 import image3 from '../assets/image3.png';
 import { Link } from 'react-router-dom';
+import Loader from './Loader';
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  useEffect(() => {
+    // Simulate loading delay (e.g., fetching data)
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -36,8 +36,8 @@ export default function Dashboard() {
 
   return (
     <div className="p-6 ">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold mb-4">CompileAI</h1>
+      <div className="flex justify-between items-center mb-4 rounded-lg border border-gray-400">
+        <h1 className="text-2xl font-bold mb-4 px-4 pt-2">CompileAI</h1>
         <div className="flex items-center gap-3">
           <Link
             to="/mine"
