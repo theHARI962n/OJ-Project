@@ -13,6 +13,7 @@
     "@codemirror/lang-cpp": "^6.0.3",
     "@uiw/react-codemirror": "^4.24.2",
     "axios": "^1.11.0",
+    "framer-motion": "^12.23.12",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",

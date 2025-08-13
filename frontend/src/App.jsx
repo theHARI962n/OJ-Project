@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation} from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -10,10 +10,15 @@ import CreateProblem from './components/admin/CreateProblem';
 import EditProblem from './components/admin/EditProblem';
 import ProtectedAdminRoute from './routes/ProtectedAdminRoute';
 import MySubmissions from './pages/MySubmissions';
+import { AnimatePresence } from 'framer-motion';
 
 function App() {
+  const location = useLocation();
   return (
-    <Routes>
+    <AnimatePresence mode="wait">
+
+    
+    <Routes location={location} key={location.pathname} >
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
@@ -25,6 +30,7 @@ function App() {
       <Route path="/admin/problems/create" element={<ProtectedAdminRoute><CreateProblem /></ProtectedAdminRoute>} />
       <Route path="/admin/problems/edit/:id" element={<ProtectedAdminRoute><EditProblem /></ProtectedAdminRoute>} />
     </Routes>
+    </AnimatePresence>
   );
 }
 
