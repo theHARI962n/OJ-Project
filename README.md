@@ -49,7 +49,7 @@ OJ_PROJECT/
 
 
 ### UI
-![Home Page](./assets/CompileAI.png)
+![Home Page](./assets/CompileAI2.png)
 
 ### UI
 ![Compiler Page](./assets/CompilerUI1.jpeg)
