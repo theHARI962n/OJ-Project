@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import axios from 'axios';
-import { API_URL } from "../api";
+import { API_URL } from "../../api";
 
 const API = `${API_URL}/api`;
 
