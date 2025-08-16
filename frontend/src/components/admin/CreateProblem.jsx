@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from "../api";
+
+const API = `${API_URL}/api`;
 
 export default function CreateProblem() {
   const [formData, setFormData] = useState({
@@ -57,7 +60,7 @@ export default function CreateProblem() {
         }))
       };
 
-      await axios.post('http://localhost:5050/api/problems', payload, {
+      await axios.post(`${API}/problems`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

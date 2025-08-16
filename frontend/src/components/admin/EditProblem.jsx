@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_URL } from "../api";
+
+const API = `${API_URL}/api`;
 
 export default function EditProblem() {
   const { id } = useParams();
@@ -19,7 +22,7 @@ export default function EditProblem() {
   useEffect(() => {
     const fetchProblem = async () => {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:5050/api/problems/${id}`, {
+      const res = await axios.get(`${API}/problems/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -71,7 +74,7 @@ export default function EditProblem() {
       const tagsArray = formData.tags.split(',').map(tag => tag.trim());
       const payload = { ...formData, tags: tagsArray };
 
-      await axios.put(`http://localhost:5050/api/problems/${id}`, payload, {
+      await axios.put(`${API}/problems/${id}`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

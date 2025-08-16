@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import axios from 'axios';
+import { API_URL } from "../api";
+
+const API = `${API_URL}/api`;
 
 export default function ProblemList() {
   const [problems, setProblems] = useState([]);
@@ -9,7 +12,7 @@ export default function ProblemList() {
   const fetchProblems = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5050/api/problems', {
+      const res = await axios.get(`${API}/problems`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -25,7 +28,7 @@ export default function ProblemList() {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5050/api/problems/${id}`, {
+      await axios.delete(`${API}/problems/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
