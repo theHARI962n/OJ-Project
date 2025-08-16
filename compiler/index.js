@@ -18,7 +18,7 @@ app.post('/run', async (req, res) => {
   }
 });
 
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
   console.log(`Compiler running on port ${PORT} 🚀`);
 });
