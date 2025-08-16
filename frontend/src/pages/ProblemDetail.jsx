@@ -5,6 +5,9 @@ import { cpp } from "@codemirror/lang-cpp";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import { Link } from "react-router-dom";
+import { API_URL } from "../api";
+
+const API = `${API_URL}/api`;
 
 export default function ProblemPage() {
   const { id } = useParams();
@@ -24,7 +27,7 @@ export default function ProblemPage() {
   // Fetch problem details
   useEffect(() => {
     const fetchProblem = async () => {
-      const res = await fetch(`http://localhost:5050/api/problems/${id}`);
+      const res = await fetch(`${API}/problems/${id}`);
       const data = await res.json();
       setProblem(data);
     };
@@ -35,7 +38,7 @@ export default function ProblemPage() {
     setLoading(true);
     setVerdict("");
     try {
-      const res = await fetch("http://localhost:5050/api/submit", {
+      const res = await fetch(`${API}/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,7 +98,7 @@ const handleAIReview = async () => {
   setAiLoading(true);
   try {
     const res = await axios.post(
-      "http://localhost:5050/api/ai-review",
+      `${API}/ai-review`,
       {
         code,
         problemTitle: problem.title,

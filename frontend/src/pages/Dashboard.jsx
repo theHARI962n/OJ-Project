@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/admin/Navbar";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { API_URL } from '../api'; 
+
+const API = `${API_URL}/api`;
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -11,7 +14,7 @@ export default function Dashboard() {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token');
       try {
-        const res = await axios.get('http://localhost:5050/api/profile', {
+        const res = await axios.get(`${API}/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(res.data);
@@ -22,7 +25,7 @@ export default function Dashboard() {
   
     const fetchProblems = async () => {
       try {
-        const res = await axios.get("http://localhost:5050/api/problems");
+        const res = await axios.get(`${API}/problems`);
         setProblems(res.data);
       } catch (err) {
         console.error("Error fetching problems:", err);

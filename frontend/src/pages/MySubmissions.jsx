@@ -1,4 +1,8 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "../api";
+
+
+const API = `${API_URL}/api`;
 
 export default function MySubmissions() {
   const [submissions, setSubmissions] = useState([]);
@@ -8,7 +12,7 @@ export default function MySubmissions() {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:5050/api/submit/my-submissions", {
+        const res = await fetch(`${API}/submit/my-submissions`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
