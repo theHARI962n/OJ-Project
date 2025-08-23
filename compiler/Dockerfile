@@ -12,7 +12,7 @@ RUN npm install
 COPY . .
 
 # Expose compiler service port (replace 8000 if your compiler uses a different one)
-EXPOSE 8000
+EXPOSE $PORT
 
 # Start the compiler service
 CMD ["node", "index.js"]
