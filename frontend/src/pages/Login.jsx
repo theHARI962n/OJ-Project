@@ -1,61 +1,69 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion"; // ✅ Import Framer Motion
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { login } from "../services/AuthService";
 import { Link, useNavigate } from "react-router-dom";
-import Loader from "./Loader";
+
+function Loader() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-50">
+      <div className="h-16 w-16 rounded-full border-4 border-indigo-600 border-t-transparent animate-spin"></div>
+    </div>
+  );
+}
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (loading) {
-    return <Loader />;
-  }
 
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    console.time("LoginTime");
+
     try {
       const res = await login(form);
       const { token, user } = res.data;
+
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
-      alert("Login successful ✅");
+
       navigate(user.role === "admin" ? "/admin" : "/dashboard");
     } catch (err) {
       alert("Login failed ❌");
+    } finally {
+      setLoading(false);
+      console.timeEnd("LoginTime");
     }
   };
 
-  return (
-    <motion.div
-      className="min-h-screen items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 pt-4 px-4"
-      initial={{ opacity: 0, y: 20 }} // fade + slight slide
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }} // fade + slide out
-      transition={{ duration: 0.5 }}
-    >
-      <Link to="/">
-        <h1 className="text-2xl font-bold text-indigo-600">CompileAI</h1>
-      </Link>
+  if (loading) return <Loader />;
 
+  return (
+    <div className="min-h-screen bg-gradient-to-r from-indigo-50 to-purple-50 relative flex flex-col">
+      {/* Top-left logo */}
+      <div className="absolute top-4 left-4">
+        <Link to="/">
+          <h1 className="text-2xl font-bold text-indigo-600">CompileAI</h1>
+        </Link>
+      </div>
+
+      {/* Centered login box */}
       <motion.div
-        className="pt-[150px]"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, duration: 0.4 }}
+        className="flex-grow flex items-center justify-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        <div className="max-w-md mx-auto bg-white p-6 rounded-3xl shadow">
+        <motion.div
+          className="max-w-md w-full bg-white p-6 rounded-3xl shadow"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 0.4 }}
+        >
           <h2 className="text-2xl font-bold">Welcome Back</h2>
           <h6 className="mb-2 text-gray-600">Login to use your dashboard</h6>
 
@@ -66,7 +74,7 @@ export default function Login() {
               placeholder="Email"
               onChange={handleChange}
               required
-              className="border p-2 rounded-xl"
+              className="border p-2 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
             />
             <input
               name="password"
@@ -74,7 +82,7 @@ export default function Login() {
               placeholder="Password"
               onChange={handleChange}
               required
-              className="border p-2 rounded-xl"
+              className="border p-2 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
             />
             <h6 className="text-gray-600">
               Don't have an account?{" "}
@@ -85,6 +93,7 @@ export default function Login() {
                 Sign up
               </Link>
             </h6>
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.97 }}
@@ -94,8 +103,8 @@ export default function Login() {
               Login
             </motion.button>
           </form>
-        </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }

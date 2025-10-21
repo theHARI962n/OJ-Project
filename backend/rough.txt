@@ -19,3 +19,160 @@ app.get('/', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
+
+
+
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // check user
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.status(200).json({ token, user: { name: user.name, email: user.email, role: user.role } });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
+
+ const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await login(form);
+      const { token, user } = res.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      alert("Login successful ✅");
+      navigate(user.role === "admin" ? "/admin" : "/dashboard");
+    } catch (err) {
+      alert("Login failed ❌");
+    }
+  };
+
+
+
+
+  Login.jsx:
+
+
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion"; // ✅ Import Framer Motion
+import { login } from "../services/AuthService";
+import { Link, useNavigate } from "react-router-dom";
+import Loader from "./Loader";
+
+export default function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
+
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+      setLoading(true); // show loader immediately
+      try {
+        const res = await login(form); // wait for API
+        const { token, user } = res.data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        navigate(user.role === "admin" ? "/admin" : "/dashboard");
+      } catch (err) {
+        alert("Login failed ❌");
+      } finally {
+        setLoading(false); // hide loader after request finishes
+      }
+    };
+    
+
+  return (
+    <motion.div
+      className="min-h-screen items-center justify-center bg-gradient-to-r from-indigo-50 to-purple-50 pt-4 px-4"
+      initial={{ opacity: 0, y: 20 }} // fade + slight slide
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }} // fade + slide out
+      transition={{ duration: 0.5 }}
+    >
+      <Link to="/">
+        <h1 className="text-2xl font-bold text-indigo-600">CompileAI</h1>
+      </Link>
+
+      <motion.div
+        className="pt-[150px]"
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.4 }}
+      >
+        <div className="max-w-md mx-auto bg-white p-6 rounded-3xl shadow">
+          <h2 className="text-2xl font-bold">Welcome Back</h2>
+          <h6 className="mb-2 text-gray-600">Login to use your dashboard</h6>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <input
+              name="email"
+              type="email"
+              placeholder="Email"
+              onChange={handleChange}
+              required
+              className="border p-2 rounded-xl"
+            />
+            <input
+              name="password"
+              type="password"
+              placeholder="Password"
+              onChange={handleChange}
+              required
+              className="border p-2 rounded-xl"
+            />
+            <h6 className="text-gray-600">
+              Don't have an account?{" "}
+              <Link
+                to="/register"
+                className="text-indigo-600 hover:text-indigo-700 transition"
+              >
+                Sign up
+              </Link>
+            </h6>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
+            >
+              Login
+            </motion.button>
+          </form>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

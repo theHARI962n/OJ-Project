@@ -1,7 +1,7 @@
 // backend/controllers/authController.js
 
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
@@ -29,7 +29,7 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     // check user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const isMatch = await bcrypt.compare(password, user.password);
