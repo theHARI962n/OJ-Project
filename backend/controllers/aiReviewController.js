@@ -9,7 +9,7 @@ const aiReview = async (req, res) => {
 
     if (!code || code.trim() === "") {
       // No code entered → give problem-solving intuition
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
       const prompt = `
       The user has NOT entered any code.
       The problem is titled: "${problemTitle}".
