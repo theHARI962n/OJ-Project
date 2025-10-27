@@ -5,11 +5,13 @@ import image3 from '../assets/image3.png';
 import { Link } from 'react-router-dom';
 import Loader from './Loader';
 import {motion} from 'framer-motion';
+import { Eye, EyeOff } from "lucide-react"; 
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'user' });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -58,7 +60,23 @@ export default function Register() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <input name="name" placeholder="Name" onChange={handleChange} required className="border p-2" />
         <input name="email" type="email" placeholder="Email" onChange={handleChange} required className="border p-2" />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} required className="border p-2" />
+        <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Password"
+                onChange={handleChange}
+                required
+                className="border p-2 rounded-xl w-full focus:ring-2 focus:ring-indigo-500 outline-none transition pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
         <select name="role" onChange={handleChange} className="border p-2">
           <option value="user">User</option>
           <option value="admin">Admin</option>

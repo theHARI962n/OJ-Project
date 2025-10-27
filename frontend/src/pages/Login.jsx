@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { login } from "../services/AuthService";
 import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 function Loader() {
   return (
@@ -14,6 +15,7 @@ function Loader() {
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -76,14 +78,24 @@ export default function Login() {
               required
               className="border p-2 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
             />
-            <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              onChange={handleChange}
-              required
-              className="border p-2 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition"
-            />
+            {/* 👇 Password field with toggle */}
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                onChange={handleChange}
+                required
+                className="border p-2 rounded-xl w-full focus:ring-2 focus:ring-indigo-500 outline-none transition pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
             <h6 className="text-gray-600">
               Don't have an account?{" "}
               <Link
