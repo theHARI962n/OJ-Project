@@ -41,12 +41,12 @@ export default function Dashboard() {
     <div className="p-6 ">
       <div className="flex justify-between items-center mb-4 rounded-lg border border-gray-400">
         <h1 className="text-2xl font-bold mb-4 px-4 pt-2">CompileAI</h1>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 ">
           <Link
             to="/mine"
-            className="bg-indigo-600 hover:bg-indigo-700 transition px-4 py-2 rounded text-white"
+            className="bg-indigo-600 hover:bg-indigo-700 transition px-4 py-2 rounded-lg text-white border border-violet-50"
           >
-            My Submissions
+             Submissions
           </Link>
           <Navbar />
         </div>

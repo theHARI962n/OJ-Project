@@ -12,10 +12,10 @@ const Navbar = () => {
   };
 
   return (
-    <nav className=" p-4 text-white flex justify-end">
+    <nav className=" p-4 text-white flex justify-end w-full max-w-5xl mx-auto">
       <button 
         onClick={handleLogout} 
-        className="bg-indigo-600 hover:bg-indigo-700 transition px-4 py-2 rounded"
+        className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
       >
         Logout
       </button>

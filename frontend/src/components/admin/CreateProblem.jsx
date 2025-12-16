@@ -73,66 +73,164 @@ export default function CreateProblem() {
   };
 
   return (
-    <div className="mx-auto mt-20 px-6 py-6 border border-gray-300 max-w-xl">
-      <h2 className="text-2xl font-bold mb-4">➕ Create New Problem</h2>
+  <div className="min-h-screen bg-blue-50 px-6 py-12 flex justify-center">
+    <div className="w-full max-w-3xl bg-white shadow-lg rounded-2xl p-8 border border-gray-200">
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Basic Fields */}
-        <input type="text" name="title" placeholder="Title"
-          value={formData.title} onChange={handleChange}
-          className="w-full border px-3 py-2 rounded" required />
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h2 className="text-3xl font-bold text-gray-800"> Create New Problem</h2>
+        <p className="text-gray-500 text-sm mt-2">
+          Add a new coding challenge with description, difficulty, tags, and test cases.
+        </p>
+      </div>
 
-        <textarea name="description" placeholder="Description" rows="4"
-          value={formData.description} onChange={handleChange}
-          className="w-full border px-3 py-2 rounded" required />
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="space-y-5">
 
-        <input type="text" name="inputFormat" placeholder="Input Format"
-          value={formData.inputFormat} onChange={handleChange}
-          className="w-full border px-3 py-2 rounded" required />
+        {/* Title */}
+        <div>
+          <label className="font-semibold">Title</label>
+          <input
+            type="text"
+            name="title"
+            placeholder="Enter problem title"
+            value={formData.title}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          />
+        </div>
 
-        <input type="text" name="outputFormat" placeholder="Output Format"
-          value={formData.outputFormat} onChange={handleChange}
-          className="w-full border px-3 py-2 rounded" required />
+        {/* Description */}
+        <div>
+          <label className="font-semibold">Description</label>
+          <textarea
+            name="description"
+            rows="4"
+            placeholder="Describe the problem in detail"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          />
+        </div>
 
-        <select name="difficulty" value={formData.difficulty}
-          onChange={handleChange} className="w-full border px-3 py-2 rounded">
-          <option>Easy</option>
-          <option>Medium</option>
-          <option>Hard</option>
-        </select>
+        {/* Input Format */}
+        <div>
+          <label className="font-semibold">Input Format</label>
+          <input
+            type="text"
+            name="inputFormat"
+            placeholder="Example: First line contains an integer N"
+            value={formData.inputFormat}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          />
+        </div>
 
-        <input type="text" name="tags" placeholder="Tags (comma separated)"
-          value={formData.tags} onChange={handleChange}
-          className="w-full border px-3 py-2 rounded" />
+        {/* Output Format */}
+        <div>
+          <label className="font-semibold">Output Format</label>
+          <input
+            type="text"
+            name="outputFormat"
+            placeholder="Example: Print the result in a new line"
+            value={formData.outputFormat}
+            onChange={handleChange}
+            required
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          />
+        </div>
 
-        {/* Test Cases */}
-        <div className="border p-3 rounded bg-gray-50">
-          <h3 className="font-semibold mb-2">Test Cases</h3>
+        {/* Difficulty */}
+        <div>
+          <label className="font-semibold">Difficulty</label>
+          <select
+            name="difficulty"
+            value={formData.difficulty}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          >
+            <option>Easy</option>
+            <option>Medium</option>
+            <option>Hard</option>
+          </select>
+        </div>
+
+        {/* Tags */}
+        <div>
+          <label className="font-semibold">Tags</label>
+          <input
+            type="text"
+            name="tags"
+            placeholder="DP, Arrays, Bitmask..."
+            value={formData.tags}
+            onChange={handleChange}
+            className="w-full border px-3 py-2 rounded-lg mt-1 focus:ring focus:ring-indigo-200"
+          />
+        </div>
+
+        {/* Test Cases Section */}
+        <div className="bg-gray-50 border rounded-xl p-5">
+          <h3 className="font-semibold mb-4">Test Cases</h3>
+
           {formData.testCases.map((tc, index) => (
-            <div key={index} className="flex gap-2 mb-2">
-              <input type="text" name="input" placeholder="Input"
-                value={tc.input} onChange={(e) => handleTestCaseChange(index, e)}
-                className="border px-2 py-1 rounded w-1/2" required />
-              <input type="text" name="expectedOutput" placeholder="Expected Output"
-                value={tc.expectedOutput} onChange={(e) => handleTestCaseChange(index, e)}
-                className="border px-2 py-1 rounded w-1/2" required />
+            <div
+              key={index}
+              className="bg-white border rounded-lg p-4 mb-4 shadow-sm flex flex-col gap-3"
+            >
+              <div className="flex gap-3">
+                <input
+                  type="text"
+                  name="input"
+                  placeholder="Input"
+                  value={tc.input}
+                  onChange={(e) => handleTestCaseChange(index, e)}
+                  className="w-1/2 border px-3 py-2 rounded-lg focus:ring focus:ring-indigo-200"
+                  required
+                />
+                <input
+                  type="text"
+                  name="expectedOutput"
+                  placeholder="Expected Output"
+                  value={tc.expectedOutput}
+                  onChange={(e) => handleTestCaseChange(index, e)}
+                  className="w-1/2 border px-3 py-2 rounded-lg focus:ring focus:ring-indigo-200"
+                  required
+                />
+              </div>
+
               {formData.testCases.length > 1 && (
-                <button type="button" onClick={() => removeTestCase(index)}
-                  className="text-red-500">✖</button>
+                <button
+                  type="button"
+                  onClick={() => removeTestCase(index)}
+                  className="text-red-500 font-semibold self-end hover:text-red-600"
+                >
+                  ✖ Remove
+                </button>
               )}
             </div>
           ))}
-          <button type="button" onClick={addTestCase}
-            className="bg-gray-300 px-2 py-1 rounded hover:bg-gray-400">
+
+          <button
+            type="button"
+            onClick={addTestCase}
+            className="bg-gray-300 px-3 py-2 rounded-lg hover:bg-gray-400 transition"
+          >
             ➕ Add Test Case
           </button>
         </div>
 
-        <button type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Create
+        {/* Submit */}
+        <button
+          type="submit"
+          className="bg-indigo-600 text-white px-5 py-3 rounded-lg hover:bg-indigo-700 transition text-lg shadow"
+        >
+          Create Problem
         </button>
       </form>
     </div>
+  </div>
   );
 }
