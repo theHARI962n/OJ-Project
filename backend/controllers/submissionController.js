@@ -4,8 +4,7 @@ const Problem = require("../models/Problem");
 
 const COMPILER_URL = process.env.COMPILER_URL;
 
-// Helper sleep to avoid relying on undefined globals
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Note: we avoid relying on any external/global `sleep` helper to prevent runtime errors
 
 if (!COMPILER_URL) {
   console.warn(
@@ -40,7 +39,8 @@ const submitCode = async (req, res) => {
     }
 
     for (let tc of problem.testCases) {
-      await sleep(1500);
+      // small delay to avoid hammering compiler when running multiple tests
+      await new Promise((r) => setTimeout(r, 1500));
       console.log("➡️ Calling compiler /run");
 
       try {
