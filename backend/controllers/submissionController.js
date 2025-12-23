@@ -1,12 +1,16 @@
-const axios = require('axios');
-const Submission = require('../models/Submission');
-const Problem = require('../models/Problem');
+const axios = require("axios");
+const Submission = require("../models/Submission");
+const Problem = require("../models/Problem");
 
 const COMPILER_URL = process.env.COMPILER_URL;
 
-// 🔒 Fail fast if compiler URL is missing
+// Helper sleep to avoid relying on undefined globals
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 if (!COMPILER_URL) {
-  throw new Error("COMPILER_URL is not defined in environment variables");
+  console.warn(
+    "WARN: COMPILER_URL is not defined. Submissions will fail until this is configured."
+  );
 }
 
 const submitCode = async (req, res) => {
@@ -22,36 +26,81 @@ const submitCode = async (req, res) => {
 
     if (!problem || !problem.testCases || problem.testCases.length === 0) {
       return res.status(400).json({
-        message: "No test cases found for this problem"
+        message: "No test cases found for this problem",
       });
     }
 
     let allPassed = true;
     let testResults = [];
 
+    if (!COMPILER_URL) {
+      return res
+        .status(500)
+        .json({ message: "Compiler not configured on server" });
+    }
+
     for (let tc of problem.testCases) {
       await sleep(1500);
       console.log("➡️ Calling compiler /run");
 
-      const response = await axios.post(`${COMPILER_URL}/run`, {
-        language,
-        code,
-        input: tc.input
-      });
+      try {
+        // timeout so long-running/hung compiler requests fail fast
+        const response = await axios.post(
+          `${COMPILER_URL}/run`,
+          {
+            language,
+            code,
+            input: tc.input,
+          },
+          { timeout: 20000 }
+        );
 
-      // 🛡 Safe output handling
-      const actualOutput = (response.data.output || "").trim();
-      const expectedOutput = (tc.expectedOutput || "").trim();
+        // Log compiler response for easier debugging
+        console.log("Compiler returned:", response.data);
 
-      const passed = actualOutput === expectedOutput;
-      if (!passed) allPassed = false;
+        // 🛡 Safe output handling: prefer normal output, then stderr or error
+        const actualOutput = (
+          (response.data &&
+            (response.data.output ||
+              response.data.stderr ||
+              response.data.error)) ||
+          ""
+        )
+          .toString()
+          .trim();
+        const expectedOutput = (tc.expectedOutput || "").trim();
 
-      testResults.push({
-        input: tc.input,
-        expectedOutput,
-        actualOutput,
-        isCorrect: passed
-      });
+        const passed = actualOutput === expectedOutput;
+        if (!passed) allPassed = false;
+
+        testResults.push({
+          input: tc.input,
+          expectedOutput,
+          actualOutput,
+          isCorrect: passed,
+        });
+      } catch (err) {
+        // If the compiler request fails for a specific test, record the error and continue
+        console.error(
+          "Compiler call failed for input:\n",
+          tc.input,
+          err.message || err
+        );
+        allPassed = false;
+
+        let actualOutput = `Compiler error: ${err.message}`;
+        if (err.code === "ECONNABORTED")
+          actualOutput = "Compiler error: timeout";
+        else if (err.response && err.response.data)
+          actualOutput = `Compiler error: ${JSON.stringify(err.response.data)}`;
+
+        testResults.push({
+          input: tc.input,
+          expectedOutput: (tc.expectedOutput || "").trim(),
+          actualOutput,
+          isCorrect: false,
+        });
+      }
     }
 
     const verdict = allPassed ? "✅ Passed" : "❌ Failed";
@@ -67,7 +116,7 @@ const submitCode = async (req, res) => {
       actualOutput: testResults[testResults.length - 1].actualOutput,
       isCorrect: allPassed,
       verdict,
-      testResults
+      testResults,
     });
 
     console.log("✅ Submission saved");
@@ -76,10 +125,9 @@ const submitCode = async (req, res) => {
       message: "Submission saved✅",
       submission: {
         ...submission.toObject(),
-        testResults
-      }
+        testResults,
+      },
     });
-
   } catch (error) {
     console.error("❌ SUBMISSION ERROR");
 
@@ -90,30 +138,36 @@ const submitCode = async (req, res) => {
       console.error("Error message:", error.message);
     }
 
+    // Build a helpful message for the frontend. If the compiler returned a body, include it.
+    const compilerInfo = error.response ? error.response.data : null;
+    const message = compilerInfo
+      ? `Submission failed: Compiler error - ${JSON.stringify(compilerInfo)}`
+      : `Submission failed: ${error.message}`;
+
     res.status(500).json({
-      message: "Submission failed❌",
-      error: error.message
+      message,
+      error: error.message,
+      compilerInfo,
     });
   }
 };
 
 const getUserSubmissions = async (req, res) => {
   try {
-    const submissions = await Submission
-      .find({ userId: req.user.userId })
-      .populate('problemId')
+    const submissions = await Submission.find({ userId: req.user.userId })
+      .populate("problemId")
       .sort({ createdAt: -1 });
 
     res.json(submissions);
   } catch (err) {
     res.status(500).json({
       message: "Error fetching submissions",
-      error: err.message
+      error: err.message,
     });
   }
 };
 
 module.exports = {
   submitCode,
-  getUserSubmissions
+  getUserSubmissions,
 };

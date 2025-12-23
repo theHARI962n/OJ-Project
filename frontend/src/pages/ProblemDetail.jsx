@@ -19,6 +19,7 @@ export default function ProblemPage() {
   const [verdict, setVerdict] = useState("");
   const [loading, setLoading] = useState(false);
   const [testResults, setTestResults] = useState([]);
+  const [errorDetails, setErrorDetails] = useState(null);
 
   // 🆕 AI feedback state
   const [aiFeedback, setAiFeedback] = useState(null);
@@ -37,6 +38,7 @@ export default function ProblemPage() {
   const handleSubmit = async () => {
     setLoading(true);
     setVerdict("");
+    setErrorDetails(null);
     try {
       const res = await fetch(`${API}/submit`, {
         method: "POST",
@@ -53,74 +55,86 @@ export default function ProblemPage() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Request failed");
+        // Show server-provided message (which may include compiler error details)
+        const serverMsg = data?.message || data?.error || "Request failed";
+        setVerdict(serverMsg);
+        // If the server included partial test results or compiler info, show it too
+        if (data?.submission?.testResults) setTestResults(data.submission.testResults);
+        if (data?.testResults) setTestResults(data.testResults);
+        setErrorDetails(data);
+        return;
       }
 
-      setVerdict(data.submission?.verdict || data.message);
-
-      // ✅ Store testResults
-      if (data.submission?.testResults) {
-        setTestResults(data.submission.testResults);
-      } else {
-        setTestResults([]);
-      }
+      setVerdict(
+        data?.submission?.verdict || data?.message || "Unknown server error"
+      );
+      setTestResults(data?.submission?.testResults || []);
     } catch (err) {
       console.error("Submit error:", err);
-      setVerdict("Error submitting code");
+      // Prefer server-sent details when available
+      const serverData = err?.response?.data || null;
+      if (serverData) {
+        setVerdict(serverData.message || JSON.stringify(serverData));
+        setErrorDetails(serverData);
+        if (serverData.testResults) setTestResults(serverData.testResults);
+      } else {
+        setVerdict(err.message || "Error submitting code");
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   // 🆕 Small helper to clean markdown formatting
   function cleanMarkdown(text) {
     if (!text) return "";
-    
-    return text
-      // Remove standalone bold markers on their own line
-      .replace(/\n\*\*\s*\n/g, '\n')
-      // Remove trailing bold markers with no text
-      .replace(/\*\*\s*$/g, '')
-      // Remove starting bold markers with no text
-      .replace(/^\s*\*\*\s*/g, '')
-      // Fix double line breaks before bullets
-      .replace(/\n\s*\*\s+/g, '\n- ')
-      // Collapse multiple newlines
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-  }
 
-const handleAIReview = async () => {
-  if (!code.trim()) {
-    setAiFeedback({ review: null, hints: "⚠️ Please enter code first." });
-    return;
-  }
-
-  setAiLoading(true);
-  try {
-    const res = await axios.post(
-      `${API}/ai-review`,
-      {
-        code,
-        problemTitle: problem.title,
-        problemDescription: problem.description,
-      },
-      {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      }
+    return (
+      text
+        // Remove standalone bold markers on their own line
+        .replace(/\n\*\*\s*\n/g, "\n")
+        // Remove trailing bold markers with no text
+        .replace(/\*\*\s*$/g, "")
+        // Remove starting bold markers with no text
+        .replace(/^\s*\*\*\s*/g, "")
+        // Fix double line breaks before bullets
+        .replace(/\n\s*\*\s+/g, "\n- ")
+        // Collapse multiple newlines
+        .replace(/\n{3,}/g, "\n\n")
+        .trim()
     );
-
-    setAiFeedback({
-      review: cleanMarkdown(res.data.review),
-      hints: cleanMarkdown(res.data.hints),
-    });
-
-  } catch (err) {
-    console.error("AI review error:", err);
-    setAiFeedback({ review: null, hints: "❌ Failed to get AI review" });
   }
-  setAiLoading(false);
-};
 
+  const handleAIReview = async () => {
+    if (!code.trim()) {
+      setAiFeedback({ review: null, hints: "⚠️ Please enter code first." });
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const res = await axios.post(
+        `${API}/ai-review`,
+        {
+          code,
+          problemTitle: problem.title,
+          problemDescription: problem.description,
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        }
+      );
+
+      setAiFeedback({
+        review: cleanMarkdown(res.data.review),
+        hints: cleanMarkdown(res.data.hints),
+      });
+    } catch (err) {
+      console.error("AI review error:", err);
+      setAiFeedback({ review: null, hints: "❌ Failed to get AI review" });
+    }
+    setAiLoading(false);
+  };
 
   if (!problem) return <div className="p-6">Loading problem...</div>;
 
@@ -219,6 +233,14 @@ const handleAIReview = async () => {
         {verdict && (
           <div className="mt-4 p-2 bg-gray-100 border rounded">
             <strong>Result:</strong> {verdict}
+          </div>
+        )}
+
+        {/* Error / Compiler Details */}
+        {errorDetails && (
+          <div className="mt-2 p-3 bg-red-50 border rounded text-sm">
+            <strong>Details:</strong>
+            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-40 text-xs">{JSON.stringify(errorDetails, null, 2)}</pre>
           </div>
         )}
 

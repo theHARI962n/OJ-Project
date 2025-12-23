@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_URL } from "../api";
 
-
 const API = `${API_URL}/api`;
 
 export default function MySubmissions() {
@@ -24,24 +23,28 @@ export default function MySubmissions() {
           },
         });
         const data = await res.json();
-          // compute unique months (YYYY) and months-per-year present in submissions
-          const yearSet = new Set();
-          const monthSet = new Set();
-          data.forEach((s) => {
-            const d = new Date(s.createdAt);
-            yearSet.add(String(d.getFullYear()));
-            monthSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-          });
-          const yearArr = Array.from(yearSet).sort((a, b) => b.localeCompare(a)); // newest year first
-          setYears(yearArr);
-          const monthArr = Array.from(monthSet).sort((a, b) => b.localeCompare(a)); // newest first
-          setMonths(monthArr);
-          // default selected year/month to newest available if present
-          if (monthArr.length > 0) {
-            const [newestYear, newestMonth] = monthArr[0].split("-");
-            setSelectedYear(newestYear);
-            setSelectedMonth(newestMonth);
-          }
+        // compute unique months (YYYY) and months-per-year present in submissions
+        const yearSet = new Set();
+        const monthSet = new Set();
+        data.forEach((s) => {
+          const d = new Date(s.createdAt);
+          yearSet.add(String(d.getFullYear()));
+          monthSet.add(
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+          );
+        });
+        const yearArr = Array.from(yearSet).sort((a, b) => b.localeCompare(a)); // newest year first
+        setYears(yearArr);
+        const monthArr = Array.from(monthSet).sort((a, b) =>
+          b.localeCompare(a)
+        ); // newest first
+        setMonths(monthArr);
+        // default selected year/month to newest available if present
+        if (monthArr.length > 0) {
+          const [newestYear, newestMonth] = monthArr[0].split("-");
+          setSelectedYear(newestYear);
+          setSelectedMonth(newestMonth);
+        }
         setSubmissions(data);
       } catch (err) {
         console.error("Error fetching submissions", err);
@@ -54,7 +57,21 @@ export default function MySubmissions() {
 
   if (loading) return <div className="p-6">Loading...</div>;
 
-  const monthNames = ["All months", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthNames = [
+    "All months",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   const formatMonthLabel = (m, y) => {
     if (!m) return "All months";
@@ -129,7 +146,10 @@ export default function MySubmissions() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">Showing <strong>{totalItems}</strong> result{totalItems !== 1 ? "s" : ""}</div>
+          <div className="text-sm text-gray-600">
+            Showing <strong>{totalItems}</strong> result
+            {totalItems !== 1 ? "s" : ""}
+          </div>
           <div className="flex items-center gap-2">
             <label className="text-sm">Per page:</label>
             <select
@@ -148,15 +168,23 @@ export default function MySubmissions() {
         </div>
       </div>
       {submissions.length === 0 ? (
-        <div className="p-6 bg-yellow-50 border rounded">No submissions yet.</div>
+        <div className="p-6 bg-yellow-50 border rounded">
+          No submissions yet.
+        </div>
       ) : filtered.length === 0 ? (
         <div className="p-6 bg-gray-50 border rounded">
           {selectedYear && selectedMonth ? (
-            <div>No submissions in {monthNames[Number(selectedMonth)]} {selectedYear}.</div>
+            <div>
+              No submissions in {monthNames[Number(selectedMonth)]}{" "}
+              {selectedYear}.
+            </div>
           ) : selectedYear ? (
             <div>No submissions in {selectedYear}.</div>
           ) : selectedMonth ? (
-            <div>No submissions in {monthNames[Number(selectedMonth)]} across years.</div>
+            <div>
+              No submissions in {monthNames[Number(selectedMonth)]} across
+              years.
+            </div>
           ) : (
             <div>No submissions for selected period.</div>
           )}
@@ -164,31 +192,39 @@ export default function MySubmissions() {
       ) : (
         <div className="overflow-x-auto border rounded">
           <table className="min-w-full divide-y">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="px-4 py-2 border">Problem</th>
-              <th className="px-4 py-2 border">Verdict</th>
-              <th className="px-4 py-2 border">Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.map((sub) => (
-              <tr key={sub._id}>
-                <td className="px-4 py-2 border">{sub.problemId?.title || "Deleted Problem"}</td>
-                <td className="px-4 py-2 border">
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-                    sub.verdict === "Accepted" ? "bg-green-100 text-green-800" : sub.verdict.includes("Wrong") ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"
-                  }`}>
-                    {sub.verdict}
-                  </span>
-                </td>
-                <td className="px-4 py-2 border">
-                  {new Date(sub.createdAt).toLocaleString()}
-                </td>
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 border">Problem</th>
+                <th className="px-4 py-2 border">Verdict</th>
+                <th className="px-4 py-2 border">Date</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginated.map((sub) => (
+                <tr key={sub._id}>
+                  <td className="px-4 py-2 border">
+                    {sub.problemId?.title || "Deleted Problem"}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    <span
+                      className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                        sub.verdict === "Accepted"
+                          ? "bg-green-100 text-green-800"
+                          : sub.verdict.includes("Wrong")
+                          ? "bg-red-100 text-red-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {sub.verdict}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {new Date(sub.createdAt).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -209,7 +245,9 @@ export default function MySubmissions() {
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
-                className={`px-3 py-1 border rounded ${p === currentPage ? "bg-blue-600 text-white" : ""}`}
+                className={`px-3 py-1 border rounded ${
+                  p === currentPage ? "bg-blue-600 text-white" : ""
+                }`}
                 onClick={() => setCurrentPage(p)}
               >
                 {p}
