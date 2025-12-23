@@ -30,6 +30,7 @@ const submitCode = async (req, res) => {
     let testResults = [];
 
     for (let tc of problem.testCases) {
+      await sleep(1500);
       console.log("➡️ Calling compiler /run");
 
       const response = await axios.post(`${COMPILER_URL}/run`, {
