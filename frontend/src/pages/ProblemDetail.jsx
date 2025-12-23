@@ -59,7 +59,8 @@ export default function ProblemPage() {
         const serverMsg = data?.message || data?.error || "Request failed";
         setVerdict(serverMsg);
         // If the server included partial test results or compiler info, show it too
-        if (data?.submission?.testResults) setTestResults(data.submission.testResults);
+        if (data?.submission?.testResults)
+          setTestResults(data.submission.testResults);
         if (data?.testResults) setTestResults(data.testResults);
         setErrorDetails(data);
         return;
@@ -240,7 +241,9 @@ export default function ProblemPage() {
         {errorDetails && (
           <div className="mt-2 p-3 bg-red-50 border rounded text-sm">
             <strong>Details:</strong>
-            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-40 text-xs">{JSON.stringify(errorDetails, null, 2)}</pre>
+            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-40 text-xs">
+              {JSON.stringify(errorDetails, null, 2)}
+            </pre>
           </div>
         )}
 
