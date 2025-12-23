@@ -3,7 +3,7 @@ const Submission = require('../models/Submission');
 const Problem = require('../models/Problem');
 
 
-const COMPILER_URL = process.env.COMPILER_URL || "http://localhost:8000";
+const COMPILER_URL = process.env.COMPILER_URL; 
 
 const submitCode = async (req, res) => {
   const { code, language, problemId } = req.body;
