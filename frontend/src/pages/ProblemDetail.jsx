@@ -1,44 +1,62 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import CodeMirror from "@uiw/react-codemirror";
 import { cpp } from "@codemirror/lang-cpp";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
-import { Link } from "react-router-dom";
+import { ArrowLeft, Sun, Moon } from "lucide-react";
 import { API_URL } from "../api";
 
 const API = `${API_URL}/api`;
 
 export default function ProblemPage() {
   const { id } = useParams();
+
+  /* ================= THEME ================= */
+  const [theme, setTheme] = useState(
+    localStorage.getItem("theme") || "dark"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () =>
+    setTheme(theme === "dark" ? "light" : "dark");
+
+  /* ================= STATE ================= */
   const [problem, setProblem] = useState(null);
   const [code, setCode] = useState(
-    `#include<iostream>\nusing namespace std;\nint main(){\n    int a,b; cin >> a >> b; \n    cout << a + b; \n    return 0;\n}`
+`#include<iostream>
+using namespace std;
+int main(){
+    int a,b;
+    cin >> a >> b;
+    cout << a + b;
+    return 0;
+}`
   );
-  const [language, setLanguage] = useState("cpp");
   const [verdict, setVerdict] = useState("");
-  const [loading, setLoading] = useState(false);
   const [testResults, setTestResults] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [errorDetails, setErrorDetails] = useState(null);
-
-  // 🆕 AI feedback state
   const [aiFeedback, setAiFeedback] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 
-  // Fetch problem details
+  /* ================= FETCH ================= */
   useEffect(() => {
-    const fetchProblem = async () => {
-      const res = await fetch(`${API}/problems/${id}`);
-      const data = await res.json();
-      setProblem(data);
-    };
-    fetchProblem();
+    fetch(`${API}/problems/${id}`)
+      .then(res => res.json())
+      .then(setProblem);
   }, [id]);
 
+  /* ================= SUBMIT ================= */
   const handleSubmit = async () => {
     setLoading(true);
     setVerdict("");
+    setTestResults([]);
     setErrorDetails(null);
+
     try {
       const res = await fetch(`${API}/submit`, {
         method: "POST",
@@ -46,72 +64,28 @@ export default function ProblemPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-        body: JSON.stringify({
-          problemId: id,
-          language,
-          code,
-        }),
+        body: JSON.stringify({ problemId: id, language: "cpp", code }),
       });
 
       const data = await res.json();
+
       if (!res.ok) {
-        // Show server-provided message (which may include compiler error details)
-        const serverMsg = data?.message || data?.error || "Request failed";
-        setVerdict(serverMsg);
-        // If the server included partial test results or compiler info, show it too
-        if (data?.submission?.testResults)
-          setTestResults(data.submission.testResults);
-        if (data?.testResults) setTestResults(data.testResults);
+        setVerdict(data.message || "Submission failed");
         setErrorDetails(data);
         return;
       }
 
-      setVerdict(
-        data?.submission?.verdict || data?.message || "Unknown server error"
-      );
-      setTestResults(data?.submission?.testResults || []);
-    } catch (err) {
-      console.error("Submit error:", err);
-      // Prefer server-sent details when available
-      const serverData = err?.response?.data || null;
-      if (serverData) {
-        setVerdict(serverData.message || JSON.stringify(serverData));
-        setErrorDetails(serverData);
-        if (serverData.testResults) setTestResults(serverData.testResults);
-      } else {
-        setVerdict(err.message || "Error submitting code");
-      }
+      setVerdict(data.submission.verdict);
+      setTestResults(data.submission.testResults);
+    } catch {
+      setVerdict("Server error");
     } finally {
       setLoading(false);
     }
   };
 
-  // 🆕 Small helper to clean markdown formatting
-  function cleanMarkdown(text) {
-    if (!text) return "";
-
-    return (
-      text
-        // Remove standalone bold markers on their own line
-        .replace(/\n\*\*\s*\n/g, "\n")
-        // Remove trailing bold markers with no text
-        .replace(/\*\*\s*$/g, "")
-        // Remove starting bold markers with no text
-        .replace(/^\s*\*\*\s*/g, "")
-        // Fix double line breaks before bullets
-        .replace(/\n\s*\*\s+/g, "\n- ")
-        // Collapse multiple newlines
-        .replace(/\n{3,}/g, "\n\n")
-        .trim()
-    );
-  }
-
+  /* ================= AI REVIEW ================= */
   const handleAIReview = async () => {
-    if (!code.trim()) {
-      setAiFeedback({ review: null, hints: "⚠️ Please enter code first." });
-      return;
-    }
-
     setAiLoading(true);
     try {
       const res = await axios.post(
@@ -121,163 +95,187 @@ export default function ProblemPage() {
           problemTitle: problem.title,
           problemDescription: problem.description,
         },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
       );
-
-      setAiFeedback({
-        review: cleanMarkdown(res.data.review),
-        hints: cleanMarkdown(res.data.hints),
-      });
-    } catch (err) {
-      console.error("AI review error:", err);
-      setAiFeedback({ review: null, hints: "❌ Failed to get AI review" });
+      setAiFeedback(res.data);
+    } catch {
+      setAiFeedback({ hints: "AI review failed" });
+    } finally {
+      setAiLoading(false);
     }
-    setAiLoading(false);
   };
 
-  if (!problem) return <div className="p-6">Loading problem...</div>;
+  if (!problem) return <div className="p-10">Loading...</div>;
+
+  /* ================= THEME CLASSES ================= */
+  const isDark = theme === "dark";
 
   return (
-    <div className="flex flex-col md:flex-row h-screen">
-      {/* Left Column */}
-      <div className="w-full md:w-1/2 p-6 overflow-y-auto border-r rounded-3xl">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-xl font-bold">CompileAI</h1>
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark
+          ? "bg-gradient-to-br from-[#0f0f1a] via-[#0b1220] to-black text-gray-200"
+          : "bg-gradient-to-br from-gray-100 via-white to-gray-200 text-gray-900"
+      } p-6`}
+    >
+      <div className="grid md:grid-cols-2 gap-6">
 
-          <Link
-            to="/dashboard"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition"
-          >
-            Go to Dashboard
-          </Link>
-        </div>
-        <h4 className="text-xl font-bold mb-4">Q. {problem.title}</h4>
-        <p className="mb-4">{problem.description}</p>
-        <div className="mb-2">
-          <strong>Input Format:</strong>
-          <p>{problem.inputFormat}</p>
-        </div>
-        <div className="mb-2">
-          <strong>Output Format:</strong>
-          <p>{problem.outputFormat}</p>
-        </div>
-        <div className="mb-2">
-          <strong>Difficulty:</strong> {problem.difficulty}
-        </div>
-        <div className="mb-2">
-          <strong>Tags:</strong> {problem.tags.join(", ")}
-        </div>
+        {/* ================= LEFT PANEL ================= */}
+        <div className={`rounded-2xl p-6 shadow-xl border ${
+          isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
+        }`}>
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">CompileAI</h1>
 
-        {/* 🆕 AI Review Button */}
-        <button
-          onClick={handleAIReview}
-          disabled={aiLoading}
-          className="bg-purple-500 text-white px-4 py-1 rounded hover:bg-purple-600 mt-4"
-        >
-          {aiLoading ? "Reviewing..." : "🧠 AI Review"}
-        </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full border hover:scale-110 transition"
+              >
+                {isDark ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
 
-        {/* 🆕 AI Feedback Box */}
-        {aiFeedback && (
-          <div className="mt-4 p-3 bg-yellow-50 border rounded">
-            {aiFeedback.review && (
-              <>
-                <h3 className="font-semibold text-lg mb-1">AI Review:</h3>
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown>{aiFeedback.review}</ReactMarkdown>
-                </div>
-              </>
-            )}
-            {aiFeedback.hints && (
-              <>
-                <h3 className="font-semibold text-lg mb-1">Hints:</h3>
-                <div className="prose prose-sm max-w-none">
-                  <ReactMarkdown>{aiFeedback.hints}</ReactMarkdown>
-                </div>
-              </>
-            )}
+              <Link to="/dashboard" className="flex items-center text-sm">
+                <ArrowLeft size={16} className="mr-1" /> Back
+              </Link>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Right Column */}
-      <div className="w-full md:w-1/2 p-6 flex flex-col ">
-        <div className="flex items-center gap-2 mb-2">
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className="border p-1 rounded"
+          <h2 className="text-xl font-semibold mb-2">{problem.title}</h2>
+          <p className="mb-4 opacity-80">{problem.description}</p>
+          {/* ===== Problem Meta Info ===== */}
+<div className="mt-4 space-y-3">
+
+  {/* Difficulty */}
+  <div className="flex items-center gap-2">
+    <span className="text-sm opacity-70">Difficulty:</span>
+    <span
+      className={`px-3 py-1 rounded-full text-xs font-semibold
+      ${
+        problem.difficulty === "Easy"
+          ? "bg-green-500/20 text-green-500"
+          : problem.difficulty === "Medium"
+          ? "bg-yellow-500/20 text-yellow-600"
+          : "bg-red-500/20 text-red-500"
+      }`}
+    >
+      {problem.difficulty}
+    </span>
+  </div>
+
+  {/* Tags */}
+  {problem.tags?.length > 0 && (
+    <div className="flex flex-wrap gap-2">
+      {problem.tags.map((tag, idx) => (
+        <span
+          key={idx}
+          className="px-3 py-1 rounded-full text-xs bg-indigo-500/20 text-indigo-400"
+        >
+          #{tag}
+        </span>
+      ))}
+    </div>
+  )}
+
+  {/* Input / Output */}
+  <div className="flex flex-col md:flex-col md:gap-3 gap-3 mt-3">
+    <div className="p-3 rounded-lg bg-black/10">
+      <p className="text-xs opacity-60 mb-1">Input Format</p>
+      <p className="font-mono text-sm">{problem.inputFormat}</p>
+    </div>
+
+    <div className="p-3 rounded-lg bg-black/10">
+      <p className="text-xs opacity-60 mb-1">Output Format</p>
+      <p className="font-mono text-sm">{problem.outputFormat}</p>
+    </div>
+  </div>
+</div>
+
+
+          <button
+            onClick={handleAIReview}
+            disabled={aiLoading}
+            className="mt-4 px-4 py-2 rounded-lg bg-purple-600 text-white hover:brightness-110"
           >
-            <option value="cpp">C++</option>
-          </select>
+            {aiLoading ? "Reviewing..." : "🧠 AI Review"}
+          </button>
 
+          {aiFeedback && (
+            <div className="mt-4 p-4 rounded-xl bg-black/10">
+              <ReactMarkdown>{aiFeedback.review || aiFeedback.hints}</ReactMarkdown>
+            </div>
+          )}
+        </div>
+
+        {/* ================= RIGHT PANEL ================= */}
+        <div className="flex flex-col gap-4">
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="bg-green-500 text-white px-4 py-1 rounded hover:bg-green-600"
+            className="px-6 py-2 rounded-xl bg-green-600 text-white hover:scale-105 transition"
           >
-            {loading ? "Running..." : "Run Code"}
+            {loading ? "Running..." : "▶ Run Code"}
           </button>
-        </div>
 
-        <CodeMirror
-          value={code}
-          height="400px"
-          extensions={[cpp()]}
-          onChange={(value) => setCode(value)}
-          className="border rounded"
-        />
-
-        {/* Verdict */}
-        {verdict && (
-          <div className="mt-4 p-2 bg-gray-100 border rounded">
-            <strong>Result:</strong> {verdict}
+          <div className="rounded-xl overflow-hidden border">
+            <CodeMirror
+              value={code}
+              height="360px"
+              extensions={[cpp()]}
+              onChange={setCode}
+            />
           </div>
-        )}
 
-        {/* Error / Compiler Details */}
-        {errorDetails && (
-          <div className="mt-2 p-3 bg-red-50 border rounded text-sm">
-            <strong>Details:</strong>
-            <pre className="mt-2 whitespace-pre-wrap overflow-auto max-h-40 text-xs">
+          {verdict && (
+            <div className={`p-3 rounded-lg text-center font-semibold ${
+              verdict.includes("Passed")
+                ? "bg-green-500/20 text-green-600"
+                : "bg-red-500/20 text-red-600"
+            }`}>
+              {verdict}
+            </div>
+          )}
+
+          {/* ================= SCROLLABLE TEST RESULTS ================= */}
+          {testResults.length > 0 && (
+            <div className="rounded-xl border p-3">
+              <h3 className="font-semibold mb-2">Test Case Results</h3>
+
+              <div className="max-h-[260px] overflow-y-auto space-y-3 pr-2">
+                {testResults.map((tr, i) => (
+                  <div
+                    key={i}
+                    className={`p-3 rounded-lg border ${
+                      tr.isCorrect
+                        ? "bg-green-500/10 border-green-500/30"
+                        : "bg-red-500/10 border-red-500/30"
+                    }`}
+                  >
+                    <p className="text-xs opacity-60">Input</p>
+                    <p className="font-mono">{tr.input}</p>
+
+                    <div className="grid grid-cols-2 gap-3 mt-2 text-sm">
+                      <div>
+                        <p className="opacity-60">Expected</p>
+                        <p className="font-mono">{tr.expectedOutput}</p>
+                      </div>
+                      <div>
+                        <p className="opacity-60">Output</p>
+                        <p className="font-mono">{tr.actualOutput}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {errorDetails && (
+            <pre className="text-xs bg-red-100 text-red-600 p-3 rounded">
               {JSON.stringify(errorDetails, null, 2)}
             </pre>
-          </div>
-        )}
-
-        {/* Test Results */}
-        {testResults.length > 0 && (
-          <div className="mt-4">
-            <h3 className="font-semibold mb-2">Test Case Results:</h3>
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="border px-2 py-1">Input</th>
-                  <th className="border px-2 py-1">Expected Output</th>
-                  <th className="border px-2 py-1">Your Output</th>
-                  <th className="border px-2 py-1">Result</th>
-                </tr>
-              </thead>
-              <tbody>
-                {testResults.map((tr, idx) => (
-                  <tr
-                    key={idx}
-                    className={tr.isCorrect ? "bg-green-50" : "bg-red-50"}
-                  >
-                    <td className="border px-2 py-1">{tr.input}</td>
-                    <td className="border px-2 py-1">{tr.expectedOutput}</td>
-                    <td className="border px-2 py-1">{tr.actualOutput}</td>
-                    <td className="border px-2 py-1">
-                      {tr.isCorrect ? "✅ Passed" : "❌ Failed"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

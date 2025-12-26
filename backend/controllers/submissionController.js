@@ -3,19 +3,11 @@ const Submission = require("../models/Submission");
 const Problem = require("../models/Problem");
 
 const COMPILER_URL = process.env.COMPILER_URL;
-
-// Note: we avoid relying on any external/global `sleep` helper to prevent runtime errors
-
-if (!COMPILER_URL) {
-  console.warn(
-    "WARN: COMPILER_URL is not defined. Submissions will fail until this is configured."
-  );
-}
+console.log("📌 Using COMPILER_URL:", COMPILER_URL);
 
 const submitCode = async (req, res) => {
   const { code, language, problemId } = req.body;
 
-  // 🔒 Ensure user is authenticated
   if (!req.user || !req.user.userId) {
     return res.status(401).json({ message: "Unauthorized user" });
   }
@@ -23,131 +15,68 @@ const submitCode = async (req, res) => {
   try {
     const problem = await Problem.findById(problemId);
 
-    if (!problem || !problem.testCases || problem.testCases.length === 0) {
-      return res.status(400).json({
-        message: "No test cases found for this problem",
-      });
+    if (!problem || !problem.testCases?.length) {
+      return res.status(400).json({ message: "No test cases found" });
     }
 
     let allPassed = true;
-    let testResults = [];
+    const testResults = [];
 
-    if (!COMPILER_URL) {
-      return res
-        .status(500)
-        .json({ message: "Compiler not configured on server" });
+    for (const tc of problem.testCases) {
+      const response = await axios.post(`${COMPILER_URL}/run`, {
+        language,
+        code,
+        input: tc.input.trim() + "\n",
+      });
+
+      const normalize = (str = "") =>
+        str.replace(/\r\n/g, "\n").trim();
+
+      const actualOutput = normalize(response.data.output);
+      const expectedOutput = normalize(tc.expectedOutput);
+
+      console.log("INPUT:", tc.input);
+      console.log("EXPECTED:", JSON.stringify(expectedOutput));
+      console.log("ACTUAL:", JSON.stringify(actualOutput));
+
+      const passed = actualOutput === expectedOutput;
+      if (!passed) allPassed = false;
+
+      testResults.push({
+        input: tc.input,
+        expectedOutput,
+        actualOutput,
+        isCorrect: passed,
+      });
     }
 
-    for (let tc of problem.testCases) {
-      // small delay to avoid hammering compiler when running multiple tests
-      await new Promise((r) => setTimeout(r, 1500));
-      console.log("➡️ Calling compiler /run");
-
-      try {
-        // timeout so long-running/hung compiler requests fail fast
-        const response = await axios.post(
-          `${COMPILER_URL}/run`,
-          {
-            language,
-            code,
-            input: tc.input,
-          },
-          { timeout: 20000 }
-        );
-
-        // Log compiler response for easier debugging
-        console.log("Compiler returned:", response.data);
-
-        // 🛡 Safe output handling: prefer normal output, then stderr or error
-        const actualOutput = (
-          (response.data &&
-            (response.data.output ||
-              response.data.stderr ||
-              response.data.error)) ||
-          ""
-        )
-          .toString()
-          .trim();
-        const expectedOutput = (tc.expectedOutput || "").trim();
-
-        const passed = actualOutput === expectedOutput;
-        if (!passed) allPassed = false;
-
-        testResults.push({
-          input: tc.input,
-          expectedOutput,
-          actualOutput,
-          isCorrect: passed,
-        });
-      } catch (err) {
-        // If the compiler request fails for a specific test, record the error and continue
-        console.error(
-          "Compiler call failed for input:\n",
-          tc.input,
-          err.message || err
-        );
-        allPassed = false;
-
-        let actualOutput = `Compiler error: ${err.message}`;
-        if (err.code === "ECONNABORTED")
-          actualOutput = "Compiler error: timeout";
-        else if (err.response && err.response.data)
-          actualOutput = `Compiler error: ${JSON.stringify(err.response.data)}`;
-
-        testResults.push({
-          input: tc.input,
-          expectedOutput: (tc.expectedOutput || "").trim(),
-          actualOutput,
-          isCorrect: false,
-        });
-      }
-    }
-
+    // ✅ DEFINE verdict ONCE
     const verdict = allPassed ? "✅ Passed" : "❌ Failed";
 
-    // 💾 Save submission
+    // ✅ SAVE TO DB
     const submission = await Submission.create({
       problemId,
       userId: req.user.userId,
       code,
       language,
-      input: testResults[testResults.length - 1].input,
-      expectedOutput: testResults[testResults.length - 1].expectedOutput,
-      actualOutput: testResults[testResults.length - 1].actualOutput,
-      isCorrect: allPassed,
       verdict,
+      isCorrect: allPassed,
       testResults,
     });
 
-    console.log("✅ Submission saved");
-
-    res.status(201).json({
-      message: "Submission saved✅",
+    // ✅ SEND RESPONSE ONCE
+    return res.status(201).json({
       submission: {
-        ...submission.toObject(),
+        verdict,
         testResults,
       },
     });
+
   } catch (error) {
-    console.error("❌ SUBMISSION ERROR");
-
-    if (error.response) {
-      console.error("Compiler response:", error.response.data);
-      console.error("Status:", error.response.status);
-    } else {
-      console.error("Error message:", error.message);
-    }
-
-    // Build a helpful message for the frontend. If the compiler returned a body, include it.
-    const compilerInfo = error.response ? error.response.data : null;
-    const message = compilerInfo
-      ? `Submission failed: Compiler error - ${JSON.stringify(compilerInfo)}`
-      : `Submission failed: ${error.message}`;
-
-    res.status(500).json({
-      message,
+    console.error("❌ SUBMISSION ERROR:", error.message);
+    return res.status(500).json({
+      message: "Submission failed",
       error: error.message,
-      compilerInfo,
     });
   }
 };

@@ -7,29 +7,34 @@ const { v4: uuid } = require('uuid');
 const tempDir = path.join(__dirname, 'temp');
 if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir);
 
-const runCode = (language, code, input = '') => {
+const runCode = (language, code, input = "") => {
   return new Promise((resolve, reject) => {
-    const filename = `${uuid()}.cpp`; // only cpp for now
+    const filename = `${uuid()}.cpp`;
     const filepath = path.join(tempDir, filename);
+    const executable = filepath.replace(".cpp", ".out");
 
     fs.writeFileSync(filepath, code);
 
-    const executable = filepath.replace('.cpp', '.out');
+    const compileCmd = `g++ ${filepath} -o ${executable}`;
 
-    const compile = `g++ ${filepath} -o ${executable}`;
-    const run = `echo "${input}" | ${executable}`;
+    exec(compileCmd, (compileErr, _, compileStderr) => {
+      if (compileErr) {
+        return reject(new Error(`Compilation error:\n${compileStderr}`));
+      }
 
-    exec(compile, (err, _, stderr) => {
-      if (err) return reject(new Error(`Compilation error:\n${stderr}`));
-
-      exec(run, (err, stdout, stderr) => {
-        if (err) return reject(new Error(`Runtime error:\n${stderr}`));
-
+      const runProcess = exec(executable, (runErr, stdout, stderr) => {
+        if (runErr) {
+          return reject(new Error(`Runtime error:\n${stderr}`));
+        }
         resolve(stdout);
-        // Clean up files if needed
       });
+
+      // ✅ Write input directly to stdin
+      runProcess.stdin.write(input + "\n");
+      runProcess.stdin.end();
     });
   });
 };
+
 
 module.exports = runCode;

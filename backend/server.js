@@ -1,8 +1,9 @@
 // backend/server.js
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+
 
 const connectDB = require('./config/db'); // 👈 Import DB
 const authRoutes = require('./routes/authRoutes');
