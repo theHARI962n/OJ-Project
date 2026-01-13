@@ -1,60 +1,65 @@
-// backend/controllers/aiReviewController.js
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const OpenAI = require("openai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 const aiReview = async (req, res) => {
   try {
     const { code, problemTitle, problemDescription } = req.body;
 
-    if (!code || code.trim() === "") {
-      // No code entered → give problem-solving intuition
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
-      const prompt = `
-      The user has NOT entered any code.
-      The problem is titled: "${problemTitle}".
-      Description: ${problemDescription}.
-      Give them **only hints and intuition** for solving this problem in 3 bullet points.
-      Do NOT reveal exact code.
-      `;
+    // ===== PROMPT =====
+    const prompt = !code || code.trim() === ""
+      ? `
+The user has NOT written any code.
 
-      const result = await model.generateContent(prompt);
-      return res.json({
-        review: null,
-        hints: result.response.text(),
-      });
-    }
+Problem Title: ${problemTitle}
+Problem Description: ${problemDescription}
 
-    // If code exists → give structured review
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `
-    You are an AI code reviewer.
-    Review the following code for the problem: "${problemTitle}".
-    Problem description: ${problemDescription}.
-    Code:
-    ${code}
+Give ONLY hints and intuition in exactly 3 bullet points.
+Do NOT give code.
+`
+      : `
+You are an AI code reviewer.
 
-    Give output in **structured format**:
-    1. Review: (2 concise sentences about the quality of the code)
-    2. Hints: (2–3 bullet points for improving the code or solving the problem better)
-    Do NOT give the complete solution or exact code.
-    `;
+Problem Title: ${problemTitle}
+Problem Description: ${problemDescription}
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+Code:
+${code}
 
-    // Try to split the AI's text into review & hints
+Respond ONLY in this format:
+
+Review:
+(2 short sentences)
+
+Hints:
+- point 1
+- point 2
+- point 3
+
+Do NOT provide full solution or exact code.
+`;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini", // 🔥 cheap + powerful
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4,
+    });
+
+    const text = completion.choices[0].message.content;
+
     const reviewMatch = text.match(/Review:(.*?)(Hints:|$)/s);
     const hintsMatch = text.match(/Hints:(.*)/s);
 
     res.json({
-      review: reviewMatch ? reviewMatch[1].trim() : "",
-      hints: hintsMatch ? hintsMatch[1].trim() : "",
+      review: reviewMatch ? reviewMatch[1].trim() : null,
+      hints: hintsMatch ? hintsMatch[1].trim() : text,
     });
 
   } catch (error) {
-    console.error("AI Review Error:", error);
-    res.status(500).json({ message: "Failed to get AI review" });
+    console.error("❌ AI Review Error:", error);
+    res.status(500).json({ message: "AI review failed" });
   }
 };
 
